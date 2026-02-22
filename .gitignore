@@ -1,7 +1,10 @@
 firstLab
+!firstLab/
 secondLab
+!secondLab/
 a.out
 test.txt
 task.md
 zeroLab
 !zeroLab/
+*.md

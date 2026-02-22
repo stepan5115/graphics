@@ -119,7 +119,7 @@ void updateRain() {
     if (!isRaining) return;
     
     for (int i = 0; i < MAX_RAINDROPS; i++) {
-        raindrops[i].y -= raindrops[i].speed;
+        raindrops[i].y -= raindrops[i].speed * dt_coeff;
         if (raindrops[i].y < 0) {
             raindrops[i].x = rand() % width;
             raindrops[i].y = height + rand() % 100;

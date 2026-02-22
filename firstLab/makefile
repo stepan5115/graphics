@@ -14,6 +14,6 @@ clean:
 	rm -f *.o
 	rm -f *~
 
-run-firstLab: firstLab
+run: firstLab
 	./firstLab
 

@@ -1,190 +1,320 @@
 #include <iostream>
+#include <ostream>
 #include <vector>
 #include <cmath>
-#include <thread>
+#include <fstream>
 #include <chrono>
-#include <algorithm>
-#include <cstdlib>
+#include <thread>
+
+using namespace std;
 
 class Canvas {
 private:
-    int width, height;
-    std::vector<std::vector<char>> buffer;
-    
+    unsigned int height;
+    unsigned int width;
+    vector<vector<char>> canvas = vector<vector<char>>();
+    void initVector() {
+        vector<char> tmp;
+        canvas.clear();
+        for (unsigned int i = 0; i < height; i++) {
+            tmp = vector<char>();
+            for (unsigned int j = 0; j < width; j++)
+                tmp.push_back(' ');
+            canvas.push_back(tmp);
+        }
+    }
 public:
-    Canvas(int w, int h) : width(w), height(h) {
-        buffer.resize(height, std::vector<char>(width, ' '));
+    Canvas(unsigned int height, unsigned int width) {
+        this->height = height;
+        this->width = width;
+        if (height == 0 || width == 0)
+            throw runtime_error("zero size");
+        initVector();
     }
-    
     void clear() {
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                buffer[y][x] = ' ';
-            }
+        initVector();
+    }
+    void setElement(int y, int x, char element) {
+        if ( y < 0 || x < 0 || y >= height || x >= width)
+            throw runtime_error("out of range insertion");
+        canvas[y][x] = element;
+    }
+    void print(ofstream& file) {
+        for (unsigned int i = 0; i < width; i++) {
+            std::cout << "-";
+            if (file.is_open())
+                file << "-";
         }
-    }
-    
-    void setPixel(int x, int y, char c = '*') {
-        if (x >= 0 && x < width && y >= 0 && y < height) {
-            buffer[y][x] = c;
-        }
-    }
-    
-    // Алгоритм Брезенхема для линии
-    void drawLine(int x1, int y1, int x2, int y2, char c = '*') {
-        int dx = abs(x2 - x1);
-        int dy = -abs(y2 - y1);
-        int sx = (x1 < x2) ? 1 : -1;
-        int sy = (y1 < y2) ? 1 : -1;
-        int err = dx + dy;
-        int e2;
-        
-        while (true) {
-            setPixel(x1, y1, c);
-            if (x1 == x2 && y1 == y2) break;
-            e2 = 2 * err;
-            if (e2 >= dy) {
-                err += dy;
-                x1 += sx;
-            }
-            if (e2 <= dx) {
-                err += dx;
-                y1 += sy;
-            }
-        }
-    }
-    
-    // Алгоритм Брезенхема для окружности
-    void drawCircle(int xc, int yc, int radius, char c = '*') {
-        int x = 0;
-        int y = radius;
-        int d = 3 - 2 * radius;
-        
-        drawCirclePoints(xc, yc, x, y, c);
-        
-        while (y >= x) {
-            x++;
-            if (d > 0) {
-                y--;
-                d = d + 4 * (x - y) + 10;
-            } else {
-                d = d + 4 * x + 6;
-            }
-            drawCirclePoints(xc, yc, x, y, c);
-        }
-    }
-    
-    void drawCirclePoints(int xc, int yc, int x, int y, char c) {
-        setPixel(xc + x, yc + y, c);
-        setPixel(xc - x, yc + y, c);
-        setPixel(xc + x, yc - y, c);
-        setPixel(xc - x, yc - y, c);
-        setPixel(xc + y, yc + x, c);
-        setPixel(xc - y, yc + x, c);
-        setPixel(xc + y, yc - x, c);
-        setPixel(xc - y, yc - x, c);
-    }
-    
-    // Рисование треугольника (три линии)
-    void drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3, char c = '*') {
-        drawLine(x1, y1, x2, y2, c);
-        drawLine(x2, y2, x3, y3, c);
-        drawLine(x3, y3, x1, y1, c);
-    }
-    
-    void display() {
-        // Очистка консоли в Linux
-        std::cout << "\033[2J\033[1;1H";  // ANSI escape codes для очистки экрана
-        
-        // Верхняя граница
-        std::cout << "+";
-        for (int x = 0; x < width; x++) std::cout << "-";
-        std::cout << "+" << std::endl;
-        
-        // Содержимое
-        for (int y = 0; y < height; y++) {
+        std::cout << std::endl;
+        if (file.is_open())
+            file << std::endl;
+        for (unsigned int i = 0; i < height; i++) {
             std::cout << "|";
-            for (int x = 0; x < width; x++) {
-                std::cout << buffer[y][x];
+            if (file.is_open())
+                file << "|";
+            for (unsigned int j = 0; j < width; j++) {
+                std::cout << canvas[i][j];
+                if (file.is_open())
+                    file << canvas[i][j];
             }
             std::cout << "|" << std::endl;
+            if (file.is_open())
+                file << "|" << std::endl;
         }
-        
-        // Нижняя граница
-        std::cout << "+";
-        for (int x = 0; x < width; x++) std::cout << "-";
-        std::cout << "+" << std::endl;
-        
-        std::cout << "Press Ctrl+C to exit..." << std::endl;
-    }
-    
-    // Сохранение в файл
-    void saveToFile(const std::string& filename) {
-        FILE* file = fopen(filename.c_str(), "w");
-        if (!file) return;
-        
-        fprintf(file, "+");
-        for (int x = 0; x < width; x++) fprintf(file, "-");
-        fprintf(file, "+\n");
-        
-        for (int y = 0; y < height; y++) {
-            fprintf(file, "|");
-            for (int x = 0; x < width; x++) {
-                fprintf(file, "%c", buffer[y][x]);
-            }
-            fprintf(file, "|\n");
+        for (unsigned int i = 0; i < width; i++) {
+            std::cout << "-";
+            if (file.is_open())
+                file << "-";
         }
-        
-        fprintf(file, "+");
-        for (int x = 0; x < width; x++) fprintf(file, "-");
-        fprintf(file, "+\n");
-        
-        fclose(file);
+        std::cout << std::endl;
+        if (file.is_open())
+            file << std::endl;
     }
 };
 
-int main() {
-    const int WIDTH = 60;
-    const int HEIGHT = 30;
-    Canvas canvas(WIDTH, HEIGHT);
-    
-    int frameCount = 0;
-    
-    while (true) {
-        // 1. Две пересекающиеся линии
-        canvas.clear();
-        canvas.drawLine(10, 5, 50, 25, '*');
-        canvas.drawLine(10, 25, 50, 5, '#');
-        canvas.display();
-        canvas.saveToFile("lines.txt");
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-        
-        // 2. Окружность
-        canvas.clear();
-        canvas.drawCircle(30, 15, 10, 'O');
-        canvas.display();
-        canvas.saveToFile("circle.txt");
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-        
-        // 3. Треугольник
-        canvas.clear();
-        canvas.drawTriangle(20, 5, 40, 5, 30, 20, '@');
-        canvas.display();
-        canvas.saveToFile("triangle.txt");
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-        
-        // 4. Комбинация (линии + окружность + треугольник)
-        canvas.clear();
-        canvas.drawLine(5, 5, 55, 5, '-');
-        canvas.drawLine(5, 25, 55, 25, '-');
-        canvas.drawCircle(30, 15, 8, 'O');
-        canvas.drawTriangle(25, 10, 35, 10, 30, 18, '+');
-        canvas.display();
-        canvas.saveToFile("combination.txt");
-        std::this_thread::sleep_for(std::chrono::seconds(3));
-        
-        frameCount++;
+void brezenchemAlgorithm(Canvas& canvas, int y_start, int x_start, int y_end, int x_end) {
+    float error = 0;
+    float delta_error;
+    int dx = abs(x_end - x_start);
+    int dy = abs(y_end - y_start);
+    int stepX = (x_start < x_end) ? 1 : -1;
+    int stepY = (y_start < y_end) ? 1 : -1;
+    int x = x_start;
+    int y = y_start;
+    canvas.setElement(y, x, '*');
+    if (dx >= dy) {
+        delta_error = (float)dy/dx;
+        for (int i = 1; i <= dx; i++) {
+            x+=stepX;
+            error += delta_error;
+            if (error >= 0.5) {
+                error -= 1;
+                y+=stepY;
+            }
+            //std::cout << x << ";" << y << ";" << error << ";" << dx << ";" << dy << std::endl;
+            canvas.setElement(y, x, '*');
+        }
     }
-    
+    else {
+        delta_error = (float)dx/dy;
+        for (int i = 1; i <= dy; i++) {
+            y+=stepY;
+            error += delta_error;
+            if (error >= 0.5) {
+                error -= 1;
+                x+=stepX;
+            }
+            canvas.setElement(y, x, '*');
+        }
+    }
+}
+
+void drawPointOnCircle(Canvas& canvas, int xc, int yc, int x, int y) {
+    canvas.setElement(yc + y, xc + x, '*');
+    canvas.setElement(yc + x, xc + y, '*');
+    canvas.setElement(yc - x, xc + y, '*');
+    canvas.setElement(yc - y, xc + x, '*');
+    canvas.setElement(yc - y, xc - x, '*');
+    canvas.setElement(yc - x, xc - y, '*');
+    canvas.setElement(yc + x, xc - y, '*');
+    canvas.setElement(yc + y, xc - x, '*');
+}
+
+void drawCircle(Canvas& canvas, int xc, int yc, int r) {
+    int x = 0;
+    int y = r;
+    int d = 3 - 2*r;
+    drawPointOnCircle(canvas, xc, yc, x, y);
+    while (y >= x) {
+        x++;
+        if (d > 0) {
+            y--;
+            d = d + 4 * (x - y) + 10;
+        } else {
+            d = d + 4 * x + 6;
+        }
+        drawPointOnCircle(canvas, xc, yc, x, y);
+    }
+}
+
+void drawTriangle(Canvas& canvas, int x1, int y1, int x2, int y2, int x3, int y3) {
+    brezenchemAlgorithm(canvas, y1, x1, y2, x2);
+    brezenchemAlgorithm(canvas, y2, x2, y3, x3);
+    brezenchemAlgorithm(canvas, y3, x3, y1, x1);
+}
+
+void test_case1(Canvas& canvas, ofstream& file) {
+    std::cout << "1/8 четверть" << std::endl;
+    brezenchemAlgorithm(canvas, 10, 10, 10, 19);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 12, 17);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 14, 14);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    std::cout << "2/8 четверть" << std::endl;
+    brezenchemAlgorithm(canvas, 10, 10, 15, 14);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 17, 12);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 19, 10);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+}
+
+void test_case2(Canvas& canvas, ofstream& file) {
+    std::cout << "3/8 четверть" << std::endl;
+    brezenchemAlgorithm(canvas, 10, 10, 19, 10);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 17, 8);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 15, 5);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    std::cout << "4/8 четверть" << std::endl;
+    brezenchemAlgorithm(canvas, 10, 10, 14, 4);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 12, 2);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 10, 0);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+}
+
+void test_case3(Canvas& canvas, ofstream& file) {
+    std::cout << "5/8 четверть" << std::endl;
+    brezenchemAlgorithm(canvas, 10, 10, 10, 0);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 8, 2);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 5, 5);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    std::cout << "6/8 четверть" << std::endl;
+    brezenchemAlgorithm(canvas, 10, 10, 3, 7);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 2, 8);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 0, 10);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+}
+
+void test_case4(Canvas& canvas, ofstream& file) {
+    std::cout << "7/8 четверть" << std::endl;
+    brezenchemAlgorithm(canvas, 10, 10, 0, 10);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 2, 12);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 5, 15);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    std::cout << "8/8 четверть" << std::endl;
+    brezenchemAlgorithm(canvas, 10, 10, 7, 17);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 8, 18);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    brezenchemAlgorithm(canvas, 10, 10, 10, 19);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+}
+
+void test_case5(Canvas& canvas, ofstream& file) {
+    drawCircle(canvas, 10, 10, 5);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    drawCircle(canvas, 10, 10, 9);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+}
+
+void test_case6(Canvas& canvas, ofstream& file) {
+    drawTriangle(canvas, 0, 0, 10, 0, 10, 10);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    drawTriangle(canvas, 0, 0, 0, 10, 5, 5);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+    drawTriangle(canvas, 0, 0, 16, 0, 10, 10);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+}
+
+void test_case7(Canvas& canvas, ofstream& file) {
+    brezenchemAlgorithm(canvas, 0, 0, 10, 10);
+    brezenchemAlgorithm(canvas, 10, 0, 0, 10);
+    brezenchemAlgorithm(canvas, 5, 0, 5, 10);
+    brezenchemAlgorithm(canvas, 0, 5, 10, 5);
+    canvas.print(file);
+    this_thread::sleep_for(chrono::seconds(1));
+    canvas.clear();
+}
+
+void test(Canvas& canvas, const string& filename) {
+    while (true) {
+        std::ofstream file(filename, std::ios::trunc);
+        if (!file.is_open()) {
+            std::cout << "Проблемы с открытием файла" << std::endl;
+            return;
+        }
+        test_case1(canvas, file);
+        test_case2(canvas, file);
+        test_case3(canvas, file);
+        test_case4(canvas, file);
+        test_case5(canvas, file);
+        test_case6(canvas, file);
+        test_case7(canvas, file);
+        file.close();
+    }
+}
+
+int main() {
+    Canvas canvas = Canvas(20, 20);
+    test(canvas, "test.txt");
     return 0;
 }

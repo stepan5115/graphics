@@ -8,3 +8,5 @@ task.md
 zeroLab
 !zeroLab/
 *.md
+thirdLab
+!thirdLab/

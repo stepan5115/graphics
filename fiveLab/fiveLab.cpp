@@ -257,6 +257,7 @@ void display() {
     glTranslatef(lightPos[0], lightPos[1], lightPos[2]);
     glutSolidSphere(0.2f, 20, 20);
     glPopMatrix();
+    glColor3f(1.0f, 1.0f, 1.0f);
     if (lightingEnabled) {
         glEnable(GL_LIGHTING);
     } else {

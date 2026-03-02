@@ -1,6 +1,13 @@
 #include <GL/glut.h>
 #include <cmath>
 #include <cstdio>
+#include <algorithm>
+#include <vector>
+
+struct SortableFace {
+    int index;
+    float distance;
+};
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -71,8 +78,35 @@ void drawExpandedCube() {
         
         glDepthMask(GL_FALSE);
     }
-    
+
+    float camX = cameraDistance * cos(rotAngleX) * sin(rotAngleY);
+    float camY = cameraDistance * sin(rotAngleX);
+    float camZ = cameraDistance * cos(rotAngleX) * cos(rotAngleY);
+
+    std::vector<SortableFace> sortedFaces;
     for (int i = 0; i < 6; i++) {
+        float multiplier = 1.0f + gap;
+        float faceX = faces[i].tx * multiplier;
+        float faceY = faces[i].ty * multiplier;
+        float faceZ = faces[i].tz * multiplier;
+
+        float dx = faceX - camX;
+        float dy = faceY - camY;
+        float dz = faceZ - camZ;
+        float dist = dx*dx + dy*dy + dz*dz;
+        
+        sortedFaces.push_back({i, dist});
+    }
+
+    if (transparencyEnabled) {
+        std::sort(sortedFaces.begin(), sortedFaces.end(), 
+                  [](const SortableFace& a, const SortableFace& b) {
+                      return a.distance > b.distance;
+                  });
+    }
+    
+    for (const auto& sf : sortedFaces) {
+        int i = sf.index;
         glPushMatrix();
         
         float multiplier = 1.0f + gap;

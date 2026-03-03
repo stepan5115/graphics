@@ -104,10 +104,10 @@ GLuint loadTexture(const char* filename) {
 void initTextures() {
     textureIDs[0] = loadTexture("test_power2.jpg");
     textureIDs[1] = loadTexture("test_power2.jpg");
-    textureIDs[2] = loadTexture("test_power2.jpg");
-    textureIDs[3] = loadTexture("test_power2.jpg");
-    textureIDs[4] = loadTexture("test_power2.jpg");
-    textureIDs[5] = loadTexture("test_power2.jpg");
+    textureIDs[2] = loadTexture("cat_resize.png");
+    textureIDs[3] = loadTexture("cat_resize.png");
+    textureIDs[4] = loadTexture("figma_resize.jpg");
+    textureIDs[5] = loadTexture("figma_resize.jpg");
     
     for (int i = 0; i < 6; i++) {
         if (textureIDs[i] == 0) {
@@ -138,19 +138,23 @@ void drawFaceTextured(float size, int faceIndex) {
     glNormal3f(0.0f, 0.0f, 1.0f);
     
     //Левая-нижняя вершина
-    glTexCoord2f(faces[faceIndex].texCoords[0][0], faces[faceIndex].texCoords[0][1]);
+    glTexCoord2f(faces[faceIndex].texCoords[0][0], 
+                 1.0f - faces[faceIndex].texCoords[0][1]);
     glVertex3f(-s, -s, 0);
     
     //Правая-нижняя вершина
-    glTexCoord2f(faces[faceIndex].texCoords[1][0], faces[faceIndex].texCoords[1][1]);
+    glTexCoord2f(faces[faceIndex].texCoords[1][0], 
+                 1.0f - faces[faceIndex].texCoords[1][1]);
     glVertex3f( s, -s, 0);
     
     //Правая-верхняя вершина
-    glTexCoord2f(faces[faceIndex].texCoords[2][0], faces[faceIndex].texCoords[2][1]);
+    glTexCoord2f(faces[faceIndex].texCoords[2][0], 
+                 1.0f - faces[faceIndex].texCoords[2][1]);
     glVertex3f( s,  s, 0);
     
     //Левая-верхняя вершина
-    glTexCoord2f(faces[faceIndex].texCoords[3][0], faces[faceIndex].texCoords[3][1]);
+    glTexCoord2f(faces[faceIndex].texCoords[3][0], 
+                 1.0f - faces[faceIndex].texCoords[3][1]);
     glVertex3f(-s,  s, 0);
     glEnd();
 }

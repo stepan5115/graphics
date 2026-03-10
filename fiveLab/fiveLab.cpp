@@ -229,12 +229,16 @@ void drawExpandedCube() {
         glRotatef(faces[i].ry, 0, 1, 0);
         glRotatef(faces[i].rz, 0, 0, 1);
         
+        GLfloat alpha = transparencyEnabled ? transparencyLevel : 1.0f;
+
         if (texturesEnabled && textureIDs[i] != 0) {
-            // Рисуем с текстурой
+            glBindTexture(GL_TEXTURE_2D, textureIDs[i]);
+            GLfloat matColor[] = {1.0f, 1.0f, 1.0f, alpha};
+            glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, matColor);
             drawFaceTextured(baseSize, i);
         } else {
             GLfloat faceColor[] = {faces[i].color[0], faces[i].color[1], 
-                               faces[i].color[2], transparencyEnabled ? transparencyLevel : 1.0f};
+                                   faces[i].color[2], alpha};
             glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, faceColor);
             drawFace(baseSize);
         }

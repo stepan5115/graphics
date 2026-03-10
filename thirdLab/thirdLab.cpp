@@ -1,3 +1,4 @@
+#include <GL/gl.h>
 #include <GL/glut.h>
 #include <cmath>
 #include <cstdio>
@@ -206,12 +207,17 @@ void init() {
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     glEnable(GL_NORMALIZE);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
     
     //Настройка материалов
     glMaterialfv(GL_FRONT, GL_AMBIENT, matAmbient);
+    glMaterialfv(GL_BACK, GL_AMBIENT, matAmbient);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, matDiffuse);
+    glMaterialfv(GL_BACK, GL_DIFFUSE, matDiffuse);
     glMaterialfv(GL_FRONT, GL_SPECULAR, matSpecular);
+    glMaterialfv(GL_BACK, GL_SPECULAR, matSpecular);
     glMaterialfv(GL_FRONT, GL_SHININESS, matShininess);
+    glMaterialfv(GL_BACK, GL_SHININESS, matShininess);
     
     //Настройка источника света
     glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
